@@ -7,23 +7,12 @@
 #include "sim.h"
 using namespace std;
 
-// # define DEBUG
-// # define OnlyL1
-// // # define L1andL2
-// # define DEBUG_streambufer
 #include <bitset>
 #include <algorithm>
 
 //----------------------Function Declaration-------------------------
 unsigned int int_log2(uint32_t x);
-
 //-------------------------------------------------------------------
-
-//diff -w output.txt val3.16_1024_1_8192_4_0_0_gcc.txt | grep '^[<>]'
-//diff -w output.txt debug3.16_1024_1_8192_4_0_0_gcc.txt | grep '^[<>]' | head -10
-// ./sim 16 1024 1 8192 4 0 0 gcc_trace.txt
-// ./sim 16 1024 1 0 0 1 4 gcc_trace.txt
-// ./sim 16 1024 2 0 0 3 1 gcc_trace.txt
 
 typedef 
 struct {
@@ -51,7 +40,6 @@ class STREAM_BUFFER{
          }
       }
 };
-
 
 class CACHE {
    public:
@@ -84,8 +72,6 @@ class CACHE {
       void Prefetch_new_stream(uint32_t buffer_index, uint32_t buffer_block_tag);
       void count_num_prefetch(uint32_t buffer_index, uint32_t buffer_block_tag);
       void print_StreamBuffer_content();
-
-      void print_set(uint32_t set_index, const char* msg);
 
       CACHE (uint32_t num_sets, uint32_t num_ways, uint32_t block_size, uint32_t PREF_N, uint32_t PREF_M)
             : sets(num_sets), ways(num_ways), blocksize(block_size)
@@ -133,20 +119,6 @@ void CACHE::read_request(uint32_t addr){
    index = (addr >> num_block_offset) & mask;
    tag = addr >> (num_block_offset + num_index_bits);
 
-   #ifdef DEBUG
-      #ifdef L1andL2
-         if(next == nullptr) {
-            printf("\t\tL2: r %x (tag=%x index=%u)\n", addr, tag, index);
-         }else {
-            printf("\tL1: r %x (tag=%x index=%u)\n", addr, tag, index);
-         }
-      #endif
-      #ifdef OnlyL1
-         printf("\tL1: r %x (tag=%x index=%u)\n", addr, tag, index);
-      #endif
-      print_set(index, "before");
-   #endif
-
    bool cache_read_hit = false;
    for(uint32_t block_index=0; block_index<ways; block_index++){
       // find through each block within the specific set
@@ -175,16 +147,6 @@ void CACHE::read_request(uint32_t addr){
          install_block(index, tag);
          LRU_update(index, tag);
          num_read ++;
-         #ifdef DEBUG
-         print_set(index, " after");
-         for(uint32_t i=0; i<StreamBuffer.size(); i++){
-            cout << "\t\tSB:";
-            for(uint32_t j=0; j<StreamBuffer[i].BLOCK_ADDR.size(); j++){
-               printf("  %x", StreamBuffer[i].BLOCK_ADDR[j]);
-            }
-            cout << "\n";
-         }
-         #endif 
          return;
       }else if(!cache_read_hit && StreamBuffer_read_hit){   // Scenario # 2 (benefit from and continue a prefetch stream): Requested block X misses in CACHE and hits in the Stream Buffer
          make_space(index);                                 // First, make space in CACHE for the requested block X
@@ -195,16 +157,6 @@ void CACHE::read_request(uint32_t addr){
          LRU_update(index, tag);
          num_read ++;
          Prefetch_new_stream(MRU_buffer_index, buffer_block_tag); // Next, manage the Stream Buffer
-         #ifdef DEBUG
-         print_set(index, " after");
-         for(uint32_t i=0; i<StreamBuffer.size(); i++){
-            cout << "\t\tSB:";
-            for(uint32_t j=0; j<StreamBuffer[i].BLOCK_ADDR.size(); j++){
-               printf("  %x", StreamBuffer[i].BLOCK_ADDR[j]);
-            }
-            cout << "\n";
-         }
-         #endif 
          return;                        
       }else if(cache_read_hit && StreamBuffer_read_hit){    // Scenario #4 (continue prefetch stream to stay in sync with demand stream): Requested block X hits in CACHE and hits in the Stream Buffer
          // no transfer from Stream Buffer to CACHE.
@@ -213,7 +165,6 @@ void CACHE::read_request(uint32_t addr){
       // Scenario # 3 (do nothing): Requested block X hits in CACHE and misses in the Stream Buffer
    }
 
-   
    if(cache_read_hit){
       LRU_update(index, tag); // update the block LRU information of this specific set
       //--------------
@@ -235,16 +186,6 @@ void CACHE::read_request(uint32_t addr){
       //--------------
       num_read ++;
    }
-   #ifdef DEBUG
-      print_set(index, " after");
-      for(uint32_t i=0; i<StreamBuffer.size(); i++){
-         cout << "\t\tSB:";
-         for(uint32_t j=0; j<StreamBuffer[i].BLOCK_ADDR.size(); j++){
-            printf("  %x", StreamBuffer[i].BLOCK_ADDR[j]);
-         }
-         cout << "\n";
-      }
-   #endif
 }
 
 void CACHE::write_request(uint32_t addr){
@@ -255,20 +196,6 @@ void CACHE::write_request(uint32_t addr){
    uint32_t mask = ((1 << num_index_bits) - 1);
    index = (addr >> num_block_offset) & mask;
    tag = addr >> (num_block_offset + num_index_bits);
-
-   #ifdef DEBUG
-      #ifdef L1andL2
-         if(next == nullptr) {
-            printf("\t\tL2: w %x (tag=%x index=%u)\n", addr, tag, index);
-         }else {
-            printf("\tL1: w %x (tag=%x index=%u)\n", addr, tag, index);
-         }
-      #endif
-      #ifdef OnlyL1
-         printf("\tL1: w %x (tag=%x index=%u)\n", addr, tag, index);
-      #endif
-      print_set(index, "before");
-   #endif
 
    bool cache_write_hit = false;
    for(uint32_t block_index=0; block_index<ways; block_index++){
@@ -304,16 +231,6 @@ void CACHE::write_request(uint32_t addr){
             }
          }
          num_write ++;
-         #ifdef DEBUG
-         print_set(index, " after");
-         for(uint32_t i=0; i<StreamBuffer.size(); i++){
-            cout << "\t\tSB:";
-            for(uint32_t j=0; j<StreamBuffer[i].BLOCK_ADDR.size(); j++){
-               printf("  %x", StreamBuffer[i].BLOCK_ADDR[j]);
-            }
-            cout << "\n";
-         }
-         #endif 
          return;
       }else if(!cache_write_hit && StreamBuffer_read_hit){   // Scenario # 2 (benefit from and continue a prefetch stream): Requested block X misses in CACHE and hits in the Stream Buffer
          make_space(index);                                 // First, make space in CACHE for the requested block X
@@ -331,16 +248,6 @@ void CACHE::write_request(uint32_t addr){
          }
          num_write ++;
          Prefetch_new_stream(MRU_buffer_index, buffer_block_tag); // Next, manage the Stream Buffer
-         #ifdef DEBUG
-         print_set(index, " after");
-         for(uint32_t i=0; i<StreamBuffer.size(); i++){
-            cout << "\t\tSB:";
-            for(uint32_t j=0; j<StreamBuffer[i].BLOCK_ADDR.size(); j++){
-               printf("  %x", StreamBuffer[i].BLOCK_ADDR[j]);
-            }
-            cout << "\n";
-         }
-         #endif   
          return;               
       }else if(cache_write_hit && StreamBuffer_read_hit){    // Scenario #4 (continue prefetch stream to stay in sync with demand stream): Requested block X hits in CACHE and hits in the Stream Buffer
          // no transfer from Stream Buffer to CACHE.
@@ -348,7 +255,6 @@ void CACHE::write_request(uint32_t addr){
       }
       // Scenario # 3 (do nothing): Requested block X hits in CACHE and misses in the Stream Buffer
    }
-
 
    if(cache_write_hit){
       LRU_update(index, tag);
@@ -386,17 +292,6 @@ void CACHE::write_request(uint32_t addr){
       num_write ++;
 
    }
-
-   #ifdef DEBUG
-      print_set(index, " after");
-      for(uint32_t i=0; i<StreamBuffer.size(); i++){
-         cout << "\t\tSB:";
-         for(uint32_t j=0; j<StreamBuffer[i].BLOCK_ADDR.size(); j++){
-            printf("  %x", StreamBuffer[i].BLOCK_ADDR[j]);
-         }
-         cout << "\n";
-      }
-   #endif
 }
 
 void CACHE::LRU_update(uint32_t set_index, uint32_t tag_value){
@@ -509,7 +404,6 @@ void CACHE::print_cache_content(){
     cout << "\n";
 }
 
-
 void CACHE::StreamBuffer_Setup(uint32_t PREF_N, uint32_t PREF_M){
    if(hasStreamBuffer){
       return;  // already has a valid size of stream buffer
@@ -521,7 +415,6 @@ void CACHE::StreamBuffer_Setup(uint32_t PREF_N, uint32_t PREF_M){
       }
    }
 }
-
 
 int CACHE::check_StreamBuffer(uint32_t buffer_block_tag){
    int MRU_buffer_index = -1;
@@ -544,7 +437,6 @@ int CACHE::check_StreamBuffer(uint32_t buffer_block_tag){
    }
 }
 
-
 void CACHE::StreamBuffer_LRU_Update(uint32_t MRU_buffer_index){
    for(uint32_t i=0; i<StreamBuffer.size(); i++){
       if(i == MRU_buffer_index) continue;
@@ -555,10 +447,8 @@ void CACHE::StreamBuffer_LRU_Update(uint32_t MRU_buffer_index){
    StreamBuffer[MRU_buffer_index].LRU = 0;
 }
 
-
 void CACHE::StreamBuffer_read_request(uint32_t buffer_block_tag){
    // prefetches are implemented by issuing read requests to the next level in the memory hierarchy.
-
    // find the LRU stream buffer
    int LRU_caparison = -1;
    int hit_buffer = -1;
@@ -577,7 +467,6 @@ void CACHE::StreamBuffer_read_request(uint32_t buffer_block_tag){
    StreamBuffer_LRU_Update(hit_buffer);      // Update LRU bit of each stream buffer
 }
 
-
 void CACHE::Prefetch_new_stream(uint32_t buffer_index, uint32_t buffer_block_tag){
    count_num_prefetch(buffer_index, buffer_block_tag);
    for(uint32_t j=0; j<StreamBuffer[buffer_index].BLOCK_ADDR.size(); j++){
@@ -586,7 +475,6 @@ void CACHE::Prefetch_new_stream(uint32_t buffer_index, uint32_t buffer_block_tag
    StreamBuffer[buffer_index].valid = true;
    StreamBuffer_LRU_Update(buffer_index);
 }
-
 
 void CACHE::count_num_prefetch(uint32_t buffer_index, uint32_t buffer_block_tag){
    if(!StreamBuffer[buffer_index].valid){
@@ -600,7 +488,6 @@ void CACHE::count_num_prefetch(uint32_t buffer_index, uint32_t buffer_block_tag)
       }
    }
 }
-
 
 void CACHE::print_StreamBuffer_content(){
    if(hasStreamBuffer){
@@ -619,43 +506,6 @@ void CACHE::print_StreamBuffer_content(){
       cout << "\n";
    }
 }
-
-
-void CACHE::print_set(uint32_t set_index, const char* msg) {
-    //printf("\tL1: %s: set %5u:", msg, set_index);
-    #ifdef L1andL2
-      if(next == nullptr) {
-         printf("\t\tL2: %s: set  %5u:", msg, set_index);
-      }else {
-         printf("\tL1: %s: set  %5u:", msg, set_index);
-      }
-    #endif
-    #ifdef OnlyL1
-      printf("\tL1: %s: set  %5u:", msg, set_index);
-    #endif
-
-    std::vector<block_params> v;
-    v.reserve(ways);
-    for (uint32_t j = 0; j < ways; ++j) {
-        if (BLOCK[set_index][j].valid) v.push_back(BLOCK[set_index][j]);
-    }
-
-    // 按 LRU 升序（0=MRU）排序
-    std::sort(v.begin(), v.end(),
-              [](const block_params& a, const block_params& b) {
-                  return a.LRU < b.LRU;
-              });
-
-    for (const auto& b : v) {
-        printf(" %7x", b.address);
-        if (b.dirty) printf(" D");
-        else         printf("  ");
-    }
-    printf("\n");
-}
-
-
-
 
 
 /*  "argc" holds the number of command-line arguments.
@@ -683,10 +533,6 @@ int main (int argc, char *argv[]) {
       exit(EXIT_FAILURE);
    }
    
-   #ifdef DEBUG
-      int inst_idx = 0;
-   #endif
-
    // "atoi()" (included by <stdlib.h>) converts a string (char *) to an integer (int).
    params.BLOCKSIZE = (uint32_t) atoi(argv[1]);
    params.L1_SIZE   = (uint32_t) atoi(argv[2]);
@@ -740,33 +586,16 @@ int main (int argc, char *argv[]) {
       }
    }
 
-
    // Read requests from the trace file and echo them back.
    while (fscanf(fp, "%c %x\n", &rw, &addr) == 2) {	// Stay in the loop if fscanf() successfully parsed two tokens as specified.
-
       if (rw == 'r') {
-         #ifdef DEBUG
-            inst_idx ++;
-            printf("%d=r %x\n", inst_idx, addr);
-         #endif
          L1_cache.read_request(addr);
-
       } else if (rw == 'w') {
-         #ifdef DEBUG
-            inst_idx ++;
-            printf("%d=w %x\n", inst_idx, addr);
-         #endif
          L1_cache.write_request(addr);
-
       } else {
          printf("Error: Unknown request type %c.\n", rw);
 	      exit(EXIT_FAILURE);
       }
-
-      ///////////////////////////////////////////////////////
-      // Issue the request to the L1 cache instance here.
-      ///////////////////////////////////////////////////////
-
    }
 
    double L1_miss_rate = (double)(L1_cache.num_read_miss + L1_cache.num_write_miss) / (double)(L1_cache.num_read + L1_cache.num_write);
@@ -818,39 +647,6 @@ int main (int argc, char *argv[]) {
    cout << "o. L2 writebacks:              " << L2_cache.num_write_back << endl;
    cout << "p. L2 prefetches:              " << L2_cache.num_prefetch << endl;
    cout << "q. memory traffic:             " << total_memory_traffic << endl;
-
-
-   #ifdef DEBUG_streambufer
-      if(L1_cache.hasStreamBuffer){
-         for(int i=0; i<(int)L1_cache.StreamBuffer.size(); i++){
-            printf("Stream Buffer %d ", i);
-            if(L1_cache.StreamBuffer[i].valid){
-               printf("(  valid LRU=%d) :  ", L1_cache.StreamBuffer[i].LRU);
-            }else{
-               printf("(invalid LRU=%d) :  ", L1_cache.StreamBuffer[i].LRU);
-            }
-            for(int j=0; j<(int)L1_cache.StreamBuffer[i].BLOCK_ADDR.size(); j++){
-               printf("%x    ", L1_cache.StreamBuffer[i].BLOCK_ADDR[j]);
-            }
-            cout << "\n";
-         }
-      }else if(L2_cache.hasStreamBuffer){
-         for(int i=0; i<(int)L2_cache.StreamBuffer.size(); i++){
-            printf("Stream Buffer %d ", i);
-            if(L2_cache.StreamBuffer[i].valid){
-               printf("(  valid LRU=%d) :  ", L2_cache.StreamBuffer[i].LRU);
-            }else{
-               printf("(invalid LRU=%d) :  ", L2_cache.StreamBuffer[i].LRU);
-            }
-            for(int j=0; j<(int)L2_cache.StreamBuffer[i].BLOCK_ADDR.size(); j++){
-               printf("%x    ", L2_cache.StreamBuffer[i].BLOCK_ADDR[j]);
-            }
-            cout << "\n";
-         }
-      }
-   #endif
-
-
    return(0);
 }
 
