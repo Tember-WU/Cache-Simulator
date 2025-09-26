@@ -1,0 +1,112 @@
+===== Simulator configuration =====
+BLOCKSIZE:  32
+L1_SIZE:    1024
+L1_ASSOC:   2
+L2_SIZE:    6144
+L2_ASSOC:   3
+PREF_N:     0
+PREF_M:     0
+trace_file: gcc_trace.txt
+
+===== L1 contents =====
+set      0:   20028d D  20018a  
+set      1:   2001c1 D  20028d D
+set      2:   200223 D  20028d  
+set      3:   20018a    2001ac D
+set      4:   20018f D  2000f9  
+set      5:   200009    20017a  
+set      6:   200009    2000f9  
+set      7:   200009    2001ac  
+set      8:   200009    3d819c D
+set      9:   200009    2000fa  
+set     10:   200009    200214  
+set     11:   200009    2001ab  
+set     12:   20018f D  2001f2  
+set     13:   20028d D  20018d D
+set     14:   20013a    20018d D
+set     15:   2001f8 D  20028c D
+
+===== L2 contents =====
+set      0:    80066 D   8007d D   800a3 D
+set      1:    80066 D   8007e D   8006d D
+set      2:    80066 D   800a3 D   800aa D
+set      3:    8006b     8006c D   800a3 D
+set      4:    800a3 D   8006b D   8003e  
+set      5:    800a3 D   800ac D   800ab D
+set      6:    8006b D   800a3 D   80079 D
+set      7:    8006b     800a3 D   800ac D
+set      8:    f6067 D   800a3 D   8007f D
+set      9:    f6067 D   800a3 D   800ac D
+set     10:    80085 D   8007f D   800a3 D
+set     11:    80085 D   800a3 D   f6067 D
+set     12:    800a3 D   8007d D   8003e  
+set     13:    800a3 D   800ac D   800ab D
+set     14:    800a3 D   8006a D   80074  
+set     15:    8007e D   800a3 D   800ac D
+set     16:    800a3 D   80074 D   f6067 D
+set     17:    80070     800a3 D   80074 D
+set     18:    800a3 D   80090     80070 D
+set     19:    800a3 D   80070 D   8006f D
+set     20:    8003e     800a3 D   80052  
+set     21:    80002     800a3 D   8006b  
+set     22:    80002     8003e     800a3 D
+set     23:    80002     800a3 D   80052  
+set     24:    80002     8003e     80052  
+set     25:    80002     800a3 D   8003e  
+set     26:    80002     800a3 D   800a9 D
+set     27:    80002     800a3 D   80063 D
+set     28:    800a3 D   80063 D   80062 D
+set     29:    800a3     80063     80074 D
+set     30:    800a3 D   80063 D   8006b D
+set     31:    80063 D   800a3 D   8006a D
+set     32:    80062     800a3 D   8005e D
+set     33:    800a3 D   800a8 D   800ab D
+set     34:    80062     800a3 D   800a8 D
+set     35:    80062     800a3 D   8005e D
+set     36:    8005e D   80062     800a3 D
+set     37:    8005e     8003e     800a3 D
+set     38:    80062     8006c D   800ab D
+set     39:    8003e     8006c D   8007d D
+set     40:    8003e     8006c D   8006a  
+set     41:    8003e     8006c D   8006a  
+set     42:    8003e     8006a     8006c D
+set     43:    8004e     8006a     800a9 D
+set     44:    8007c     80062 D   8006a  
+set     45:    8004e     8006c D   8007f D
+set     46:    8004e     8006c D   800a2 D
+set     47:    8004e     80088 D   800a2 D
+set     48:    8006a     80073     80088 D
+set     49:    80054 D   8004e     8003e  
+set     50:    80088 D   8004e     8007d D
+set     51:    800a2 D   800ab D   800aa D
+set     52:    80063 D   8008f     8007c D
+set     53:    8008f     80063 D   800a2 D
+set     54:    8008f     80088 D   800a2 D
+set     55:    8008f     8006e D   8005e D
+set     56:    8005e D   8008f     8007d D
+set     57:    8008f     8005e D   800a6 D
+set     58:    8008f     8006a D   80063 D
+set     59:    8006a     8008f     800a2 D
+set     60:    80063     8006a     8008f  
+set     61:    8006c D   8006a D   8006b D
+set     62:    80069 D   800a2 D   8006c D
+set     63:    80065 D   80069 D   800a2 D
+
+===== Measurements =====
+a. L1 reads:                   63640
+b. L1 read misses:             9623
+c. L1 writes:                  36360
+d. L1 write misses:            5980
+e. L1 miss rate:               0.1560
+f. L1 writebacks:              7002
+g. L1 prefetches:              0
+h. L2 reads (demand):          15603
+i. L2 read misses (demand):    5297
+j. L2 reads (prefetch):        0
+k. L2 read misses (prefetch):  0
+l. L2 writes:                  7002
+m. L2 write misses:            25
+n. L2 miss rate:               0.3395
+o. L2 writebacks:              2907
+p. L2 prefetches:              0
+q. memory traffic:             8229
