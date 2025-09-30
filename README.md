@@ -30,7 +30,10 @@ To run with throttling (via "less"):
 To run and confirm that all requests in the trace were read correctly:
 ```./sim 32 8192 4 262144 8 3 10 ../example_trace.txt > echo_trace.txt
    diff ../example_trace.txt echo_trace.txt
-	The result of "diff" should indicate that the only difference is that echo_trace.txt has the configuration information.
+```
+
+The result of "diff" should indicate that the only difference is that echo_trace.txt has the configuration information.
+```
 	0a1,10
 	> ===== Simulator configuration =====
 	> BLOCKSIZE:  32
