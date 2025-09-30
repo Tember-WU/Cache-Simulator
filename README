@@ -1,14 +1,27 @@
-Cache-Simulator
-A flexible and configurable cache and memory hierarchy simulator with stream-buffer prefetching.
+# Cache-Simulator
 
-This is the Project 1 of ECE563 Microprocessor Architecture at NC State University.
+A **flexible and configurable cache and memory hierarchy simulator** with **stream-buffer prefetching**.  
 
-How to run the code
-1. Type "make" to build.  (Type "make clean" first if you already compiled and want to recompile from scratch.)
+This is **Project #1** of **ECE 563: Microprocessor Architecture** at **NC State University**.
 
-2. Run trace reader:
+---
 
-   To run without throttling output:
+## Build Instructions
+
+To compile the simulator:  
+`make`
+
+If you already compiled before and want to recompile from scratch:  
+`make clean && make`
+
+---
+
+## How to Run the code
+
+### 1. Type "make" to build.  (Type "make clean" first if you already compiled and want to recompile from scratch.)
+
+### 2. Run trace reader:
+   `To run without throttling output:
    ./sim 32 8192 4 262144 8 3 10 example_trace.txt
 
    To run with throttling (via "less"):
@@ -29,4 +42,3 @@ How to run the code
 	> PREF_M:     10
 	> trace_file: ../example_trace.txt
 	>
-
